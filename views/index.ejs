@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!--
+    📄 index.ejs — The Main HTML Template
+    EJS (Embedded JavaScript) lets us use JavaScript inside HTML.
+    Variables passed from app.js are: data, trending, error
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoTracker — Live Cryptocurrency Prices</title>
+
+  <!-- Google Font for modern typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Our custom stylesheet -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+  <!-- ========== HEADER SECTION ========== -->
+  <header class="header">
+    <div class="logo">🪙 CryptoTracker</div>
+    <p class="tagline">Real-time cryptocurrency prices powered by Blockchain.com</p>
+  </header>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="container">
+
+    <!-- ===== SEARCH SECTION ===== -->
+    <!-- The form sends a POST request to "/" when submitted -->
+    <section class="search-section">
+      <h1 class="main-title">Check Crypto Prices</h1>
+      <p class="subtitle">Select a cryptocurrency and get live market data instantly</p>
+
+      <form method="POST" class="search-form" id="search-form">
+        <!--
+          The <select> dropdown lets users pick a cryptocurrency.
+          The "name" attribute ("crypto") is what app.js reads as req.body.crypto
+        -->
+        <select name="crypto" id="crypto-select" class="crypto-select">
+          <option value="BTC">🟠 Bitcoin (BTC)</option>
+          <option value="ETH">🔷 Ethereum (ETH)</option>
+          <option value="DOGE">🐕 Dogecoin (DOGE)</option>
+          <option value="XLM">⭐ Stellar (XLM)</option>
+          <option value="LTC">⚪ Litecoin (LTC)</option>
+          <option value="BCH">💚 Bitcoin Cash (BCH)</option>
+        </select>
+
+        <button type="submit" id="check-price-btn" class="btn-primary">
+          🔍 Check Price
+        </button>
+      </form>
+    </section>
+
+    <!-- ===== ERROR MESSAGE ===== -->
+    <!-- Show this only if there's an error (passed from app.js) -->
+    <% if (error) { %>
+      <div class="error-card" id="error-message">
+        <p>
+          <%= error %>
+        </p>
+      </div>
+      <% } %>
+
+        <!-- ===== PRICE RESULT CARD ===== -->
+        <!--
+      Show this only when "data" is not null.
+      "data" contains: symbol, price, volume, price24h
+    -->
+        <% if (data) { %>
+          <section class="result-section" id="result-card">
+            <div class="result-card">
+              <div class="result-header">
+                <h2 class="result-symbol">
+                  <%= data.symbol %>
+                </h2>
+                <span class="badge">LIVE</span>
+              </div>
+
+              <div class="price-display">
+                <span class="price-label">Current Price</span>
+                <span class="price-value">
+                  $<%= parseFloat(data.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits:
+                    2 }) %>
+                </span>
+              </div>
+
+              <div class="stats-grid">
+                <!-- 24h Price -->
+                <div class="stat-item">
+                  <span class="stat-label">📊 24h Price</span>
+                  <span class="stat-value">
+                    $<%= parseFloat(data.price24h).toLocaleString("en-US", { minimumFractionDigits: 2,
+                      maximumFractionDigits: 2 }) %>
+                  </span>
+                </div>
+
+                <!-- 24h Volume -->
+                <div class="stat-item">
+                  <span class="stat-label">📦 24h Volume</span>
+                  <span class="stat-value">
+                    <%= parseFloat(data.volume).toLocaleString("en-US", { minimumFractionDigits: 4,
+                      maximumFractionDigits: 4 }) %>
+                  </span>
+                </div>
+
+                <!-- Price Change (calculated: current price - 24h price) -->
+                <div class="stat-item">
+                  <span class="stat-label">📈 Price Change</span>
+                  <% var change=parseFloat(data.price) - parseFloat(data.price24h); var changePercent=((change /
+                    parseFloat(data.price24h)) * 100); %>
+                    <span class="stat-value <%= change >= 0 ? 'text-green' : 'text-red' %>">
+                      <%= change>= 0 ? '+' : '' %><%= change.toFixed(2) %>
+                          (<%= changePercent.toFixed(2) %>%)
+                    </span>
+                </div>
+              </div>
+            </div>
+          </section>
+          <% } %>
+
+            <!-- ===== TRENDING SECTION ===== -->
+            <%# The "trending" array is passed from app.js (top 5 by volume). We loop through it using forEach to create
+              a card for each. %>
+              <% if (trending && trending.length> 0) { %>
+                <section class="trending-section" id="trending-section">
+                  <h2 class="section-title">🔥 Trending Cryptocurrencies</h2>
+                  <p class="section-subtitle">Top 5 by 24-hour trading volume</p>
+
+                  <div class="trending-grid">
+                    <% trending.forEach(function(ticker, index) { %>
+                      <div class="trending-card" style="animation-delay: <%= index * 0.1 %>s">
+                        <!-- Rank number -->
+                        <div class="rank">#<%= index + 1 %>
+                        </div>
+
+                        <!-- Crypto symbol name -->
+                        <h3 class="ticker-name">
+                          <%= ticker.symbol %>
+                        </h3>
+
+                        <!-- Last traded price -->
+                        <p class="ticker-price">
+                          $<%= parseFloat(ticker.last_trade_price).toLocaleString("en-US", { minimumFractionDigits: 2,
+                            maximumFractionDigits: 2 }) %>
+                        </p>
+
+                        <!-- 24h trading volume -->
+                        <p class="ticker-volume">
+                          Vol: <%= parseFloat(ticker.volume_24h).toLocaleString("en-US", { minimumFractionDigits: 2,
+                            maximumFractionDigits: 4 }) %>
+                        </p>
+                      </div>
+                      <% }); %>
+                  </div>
+                </section>
+                <% } %>
+
+                  <!-- ===== HOW IT WORKS SECTION ===== -->
+                  <section class="how-it-works">
+                    <h2 class="section-title">⚙️ How It Works</h2>
+                    <div class="steps-grid">
+                      <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>Choose a Crypto</h3>
+                        <p>Pick from popular cryptocurrencies using the dropdown menu</p>
+                      </div>
+                      <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>We Call the API</h3>
+                        <p>Our server uses Axios to fetch live data from Blockchain.com</p>
+                      </div>
+                      <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3>See the Results</h3>
+                        <p>Price, volume, and 24h change are displayed instantly</p>
+                      </div>
+                    </div>
+                  </section>
+
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <p>Built with <strong>Express.js</strong>, <strong>Axios</strong> &amp; <strong>EJS</strong></p>
+    <p>Data from <a href="https://api.blockchain.com/v3/" target="_blank" rel="noopener">Blockchain.com API</a></p>
+  </footer>
+
+</body>
+
+</html>
